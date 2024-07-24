@@ -8,5 +8,5 @@ router = routers.DefaultRouter(trailing_slash=False)
 
 urlpatterns = [
     path(r"", include(router.urls)),
-    path(r"health/", health_check, name="health_check"),
+    path(r"health", health_check, name="health_check"),
 ]
