@@ -12,6 +12,7 @@ env:
   POSTGRES_PASSWORD: test
   POSTGRES_HOST: 127.0.0.1
   POSTGRES_PORT: 5432
+  WORKING_DIRECTORY: backend
 
 jobs:
   Test:
@@ -19,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: backend
+        working-directory: ${{ env.WORKING_DIRECTORY }}
     services:
       db:
         # PostgresのDocker imageを使用
@@ -41,7 +42,7 @@ jobs:
       - name: Setup Poetry
         uses: ./.github/actions/set-up-poetry
         with:
-          working-directory: backend
+          working-directory: ${{ env.WORKING_DIRECTORY }}
       - name: Run migration
         run: |
           poetry run python manage.py makemigrations
