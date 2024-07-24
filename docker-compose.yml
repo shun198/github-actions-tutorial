@@ -1,0 +1,60 @@
+version: '3.9'
+
+services:
+  db:
+    container_name: db
+    image: postgres:16.2
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: pg_isready -U "${POSTGRES_USER:-postgres}" || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    environment:
+      - POSTGRES_NAME=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - '5432:5432' # デバッグ用
+
+  app:
+    container_name: app
+    build:
+      context: .
+      dockerfile: containers/django/Dockerfile
+    volumes:
+      - ./backend:/code
+      - ./static:/static
+    ports:
+      - '8000:8000'
+      # デバッグ用ポート
+      - '8080:8080'
+    command: sh -c "/usr/local/bin/entrypoint.sh"
+    stdin_open: true
+    tty: true
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+
+  nginx:
+    container_name: web
+    build:
+      context: .
+      dockerfile: containers/nginx/Dockerfile
+    volumes:
+      - ./static:/static
+    ports:
+      - 80:80
+    depends_on:
+      - app
+
+volumes:
+  db_data:
+  static:
+
+networks:
+  default:
+    name: testnet

@@ -1,6 +1,4 @@
-"""Dev環境用のURL"""
-
-from django.conf.urls.static import static
+"""local環境用のURL"""
 from django.urls import include, path
 from drf_spectacular.views import (
     SpectacularAPIView,
@@ -8,7 +6,6 @@ from drf_spectacular.views import (
     SpectacularSwaggerView,
 )
 
-from project.settings.base import MEDIA_ROOT, MEDIA_URL
 from project.urls.base import urlpatterns
 
 urlpatterns += [
@@ -27,4 +24,3 @@ urlpatterns += [
     ),
 ]
 
-urlpatterns += static(MEDIA_URL, document_root=MEDIA_ROOT)

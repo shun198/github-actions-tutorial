@@ -9,9 +9,6 @@ https://docs.djangoproject.com/en/4.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.1/ref/settings/
 """
-
-import os
-from logging.config import dictConfig
 from pathlib import Path
 
 from .environment import django_settings
@@ -38,8 +35,6 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.BasicAuthentication",
         "rest_framework.authentication.SessionAuthentication",
     ],
-    "DEFAULT_PAGINATION_CLASS": "application.utils.pagination.CustomPageNumberPagination",
-    "PAGE_SIZE": 10,
 }
 
 
@@ -65,7 +60,6 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "application.utils.middleware.LoggingMiddleware",
 ]
 
 TEMPLATES = [
@@ -121,10 +115,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
-# Internationalization
-# https://docs.djangoproject.com/en/4.1/topics/i18n/
-
 LANGUAGE_CODE = "ja"
 
 TIME_ZONE = "Asia/Tokyo"
@@ -133,28 +123,13 @@ USE_I18N = True
 
 USE_TZ = True
 
-AUTH_USER_MODEL = "application.User"
-
 # STATIC_ROOTを設定
 STATIC_ROOT = "/static/"
 STATIC_URL = "/static/"
 
-# Sessionの設定を追加
-# SESSION_COOKIE_AGE = 60 * 60 * 2  # 2時間 - セッション時間は自動的に伸ばす。
-# SESSION_SAVE_EVERY_REQUEST = True
-# SESSION_ENGINE = "django.contrib.sessions.backends.cache"
-
-# Default primary key field type
-# https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
-
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 ROOT_URLCONF = "project.urls.base"
-
-MEDIA_URL = "/upload/"
-MEDIA_ROOT = os.path.join(BASE_DIR, "upload")
-
-MAX_FILE_SIZE_LIMIT = 5000000
 
 # 自身以外のオリジンのHTTPリクエスト内にクッキーを含めることを許可する
 CORS_ALLOW_CREDENTIALS = True
@@ -163,29 +138,5 @@ CORS_ALLOWED_ORIGINS = django_settings.TRUSTED_ORIGINS.split()
 # プリフライト(事前リクエスト)の設定
 # 30分だけ許可
 CORS_PREFLIGHT_MAX_AGE = 60 * 30
-
-LOGGING = {
-    "version": 1,
-    "disable_existing_loggers": False,
-    "filters": {
-        "require_debug_false": {
-            "()": "django.utils.log.RequireDebugFalse",
-        },
-    },
-    "handlers": {
-        "slack": {
-            "level": "ERROR",
-            "filters": ["require_debug_false"],
-            "class": "application.utils.logs.SlackHandler",
-        }
-    },
-    "loggers": {
-        "django.request": {
-            "handlers": ["slack"],
-            "level": "ERROR",
-            "propagate": True,
-        },
-    },
-}
 
 BASE_URL = django_settings.BASE_URL
