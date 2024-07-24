@@ -1,0 +1,13 @@
+name: first workflow
+
+on: workflow_dispatch
+
+jobs:
+  # "my_first_job"というジョブIDでジョブを定義
+  my_first_job:
+    name: My first job
+    runs-on: ubuntu-20.04
+  # "my_second_job"というジョブIDでジョブを定義
+  my_second_job:
+    name: My second job
+    runs-on: ubuntu-20.04
