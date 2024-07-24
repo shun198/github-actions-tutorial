@@ -15,7 +15,7 @@ env:
   WORKING_DIRECTORY: backend
 
 jobs:
-  Test:
+  test:
     name: Run Test Code
     runs-on: ubuntu-latest
     defaults:

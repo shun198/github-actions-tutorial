@@ -32,7 +32,7 @@ jobs:
         uses: Legion2/swagger-ui-action@v1
         with:
           output: swagger-ui
-          spec-file: openapi.yml
+          spec-file: ${{ env.WORKING_DIRECTORY }}/openapi.yml
       - name: Upload Documents
         uses: actions/upload-pages-artifact@v3
         with:

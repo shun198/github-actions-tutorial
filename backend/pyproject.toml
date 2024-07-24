@@ -1,7 +1,7 @@
 [tool.poetry]
 authors = ["shun198"]
-description = "api"
-name = "api"
+description = ""
+name = "code"
 readme = "README.md"
 version = "0.1.0"
 
