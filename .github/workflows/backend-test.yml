@@ -1,0 +1,57 @@
+name: Run Pytest
+
+on: workflow_dispatch
+
+
+env:
+  SECRET_KEY: test
+  DJANGO_SETTINGS_MODULE: project.settings.local
+  ALLOWED_HOSTS: 127.0.0.1
+  POSTGRES_NAME: test
+  POSTGRES_USER: test
+  POSTGRES_PASSWORD: test
+  POSTGRES_HOST: 127.0.0.1
+  POSTGRES_PORT: 5432
+
+jobs:
+  Test:
+    name: Run Test Code
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      db:
+        # PostgresのDocker imageを使用
+        image: postgres:16.2
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_NAME: ${{ env.POSTGRES_NAME }}
+          POSTGRES_USER: ${{ env.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
+        options: >-
+          --health-cmd "pg_isready"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Chekcout code
+        uses: actions/checkout@v4
+      - name: Setup Poetry
+        uses: ./.github/actions/set-up-poetry
+        with:
+          working-directory: backend
+      - name: Run migration
+        run: |
+          poetry run python manage.py makemigrations
+          poetry run python manage.py migrate
+      - name: Run Pytest
+        run: |
+          set -o pipefail
+          poetry run pytest --junitxml=pytest.xml -x -n auto --cov --no-cov-on-fail --suppress-no-test-exit-code | tee pytest-coverage.txt
+      - name: Pytest coverage comment
+        uses: MishaKav/pytest-coverage-comment@main
+        with:
+          pytest-coverage-path: ${{ env.WORKING_DIRECTORY }}/pytest-coverage.txt
+          junitxml-path: ${{ env.WORKING_DIRECTORY }}/pytest.xml

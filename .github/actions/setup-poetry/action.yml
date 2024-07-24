@@ -1,0 +1,26 @@
+name: Setup Poetry
+
+description: Setup Poetry
+
+inputs:
+  working-directory:
+    description: working-directory of pyproject.toml
+    required: true
+    default: backend
+
+runs:
+  # compositeが必須
+  using: composite
+  steps:
+    - name: Install poetry
+      run: pipx install poetry
+      shell: bash
+    - name: Use cache dependencies
+      uses: actions/setup-python@v5
+      with:
+        python-version-file: ${{ inputs.working-directory }}/pyproject.toml
+        cache: 'poetry'
+    - name: Install Packages
+      run: poetry install
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
