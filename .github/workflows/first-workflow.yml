@@ -7,7 +7,13 @@ jobs:
   my_first_job:
     name: My first job
     runs-on: ubuntu-20.04
+    steps:
+      - name: print my_first_job
+        run: echo "my_first_job"
   # "my_second_job"というジョブIDでジョブを定義
   my_second_job:
     name: My second job
     runs-on: ubuntu-20.04
+    steps:
+      - name: print my_second_job
+        run: echo "my_second_job"
