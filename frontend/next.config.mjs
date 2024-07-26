@@ -1,6 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true,
+  // next buildすると自動的にexportするので記載
+  output: 'export',
+  // 画像の最適化を無効化し、元の画像ファイルをそのまま使用
+  images: {
+    unoptimized: true,
+  },
 };
 
-export default nextConfig;
+module.exports = nextConfig;
