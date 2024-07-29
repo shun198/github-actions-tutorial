@@ -46,10 +46,6 @@ Resources:
     UpdateReplacePolicy: Retain
     Type: AWS::S3::Bucket
     Properties:
-      BucketEncryption:
-        ServerSideEncryptionConfiguration:
-          - ServerSideEncryptionByDefault:
-              SSEAlgorithm: AES256
       BucketName: !Sub s3-deploy-${ProjectName}-${Environment}-${AWS::Region}
 
   # S3 Bucket Policy
