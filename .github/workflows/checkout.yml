@@ -13,7 +13,7 @@ jobs:
       - name: show current directory before checkout
         run: pwd
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Inspect files after checkout
         run: ls -la
       - name: show current directory after checkout
