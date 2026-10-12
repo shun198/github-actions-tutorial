@@ -1,49 +1,78 @@
-name: Dependabot auto-approve and auto-merge
+name: Dependabot minor and patch approval and auto-merge
 
 on:
   pull_request:
     types: [opened, synchronize, reopened]
 
+permissions:
+  contents: write
+  pull-requests: write
+
 concurrency:
-  group: dependabot-auto-merge-${{ github.event.pull_request.number }}
-  cancel-in-progress: true
+  group: dependabot-approval-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
 
 jobs:
   approve-and-merge:
-    if: >-
-      github.event.pull_request.user.login == 'dependabot[bot]' &&
-      github.event.pull_request.head.repo.full_name == github.repository
+    if: github.event.pull_request.user.login == 'dependabot[bot]' && github.event.pull_request.head.repo.full_name == github.repository && github.repository == 'shun198/github-actions-tutorial'
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
     steps:
-      - name: Fetch Dependabot metadata
+      - name: Read Dependabot update metadata
         id: metadata
         uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Approve and enable auto-merge for minor and patch updates
-        if: >-
-          steps.metadata.outputs.update-type == 'version-update:semver-minor' ||
-          steps.metadata.outputs.update-type == 'version-update:semver-patch'
+      - name: Approve and merge minor or patch update
+        if: steps.metadata.outputs.update-type == 'version-update:semver-minor' || steps.metadata.outputs.update-type == 'version-update:semver-patch'
         env:
-          GH_TOKEN: ${{ github.token }}
-          REPOSITORY: ${{ github.repository }}
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           PR_URL: ${{ github.event.pull_request.html_url }}
-          EXPECTED_SHA: ${{ github.event.pull_request.head.sha }}
+          REPOSITORY: ${{ github.repository }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          current_sha="$(gh api "repos/$REPOSITORY/pulls/$PR_NUMBER" --jq '.head.sha')"
-          if [ "$current_sha" != "$EXPECTED_SHA" ]; then
-            echo "Pull request head changed during this workflow run; skipping approval and auto-merge."
+          set -euo pipefail
+
+          assert_head_sha() {
+            local current
+            current="$(gh pr view "$PR_NUMBER" --json headRefOid -q .headRefOid)"
+            if [ "$current" != "$EXPECTED_SHA" ]; then
+              echo "Head SHA drift: expected $EXPECTED_SHA, got $current"
+              exit 1
+            fi
+          }
+
+          assert_head_sha
+
+          approve_output=""
+          if ! approve_output="$(gh api --method POST \
+            --header "Accept: application/vnd.github+json" \
+            --header "X-GitHub-Api-Version: 2022-11-28" \
+            "repos/$REPOSITORY/pulls/$PR_NUMBER/reviews" \
+            -f event=APPROVE \
+            -f commit_id="$EXPECTED_SHA" 2>&1)"; then
+            if echo "$approve_output" | grep -qiE 'not permitted to approve|cannot approve'; then
+              echo "Skipping approval (not permitted): $approve_output"
+            else
+              echo "$approve_output" >&2
+              exit 1
+            fi
+          fi
+
+          merge_output=""
+          if merge_output="$(gh pr merge "$PR_URL" --auto --merge --match-head-commit "$EXPECTED_SHA" 2>&1)"; then
+            echo "$merge_output"
             exit 0
           fi
 
-          gh api --method POST "repos/$REPOSITORY/pulls/$PR_NUMBER/reviews" \
-            --field event=APPROVE \
-            --field commit_id="$EXPECTED_SHA" \
-            --field body="Dependabot minor/patch update. GitHub auto-merge remains gated by repository requirements."
+          if echo "$merge_output" | grep -qiE 'Protected branch rules not configured|enablePullRequestAutoMerge|pull request auto-merge|auto merge is not allowed|auto-merge is not enabled'; then
+            echo "Auto-merge unavailable, waiting for checks then merging directly:"
+            echo "$merge_output"
+            gh pr checks "$PR_NUMBER" --watch --interval 10 || true
+            assert_head_sha
+            gh pr merge "$PR_URL" --merge --match-head-commit "$EXPECTED_SHA"
+            exit 0
+          fi
 
-          gh pr merge "$PR_URL" --auto --merge --match-head-commit "$EXPECTED_SHA"
+          echo "$merge_output" >&2
+          exit 1
