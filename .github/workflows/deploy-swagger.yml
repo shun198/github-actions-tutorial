@@ -34,7 +34,7 @@ jobs:
           output: swagger-ui
           spec-file: ${{ env.WORKING_DIRECTORY }}/openapi.yml
       - name: Upload Documents
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: swagger-ui
 
